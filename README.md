@@ -22,12 +22,6 @@ A hands-on **Security Operations Center (SOC) incident-response simulation**: in
 
 ---
 
-## AI-assisted methodology
-
-This engagement used generative AI (Claude) as a **"virtual analyst"** — to help plan reconnaissance, parse tool output, research CVEs, and draft documentation. Critically, **every AI-suggested finding was independently verified with a manual tool** before being treated as evidence (the "trust but verify" mandate), and that verification is captured in the screenshots throughout this repository. Using AI as a force-multiplier while keeping a human in the loop for verification was an explicit requirement of the project.
-
----
-
 ## The engagement
 
 ### 1 · Prepare — build an isolated forensic lab
@@ -119,6 +113,12 @@ The core problem is an unpatchable, end-of-life server exposing unnecessary serv
 - **Eradicate at the root, with defense in depth.** The vulnerable FTP service and the planted backdoor shared one parent process (`xinetd`). Disabling it, firewalling the port, and deleting the backdoor's config line closed the threat through multiple independent layers.
 - **Unpatchable ≠ unfixable.** When a legacy system can't be patched, compensating controls (service disablement, firewalling, isolation) plus a funded migration plan are the realistic path.
 - **Communicate to the audience.** The same incident required two very different deliverables: a technical report for engineers and a business-impact briefing for executives.
+
+---
+
+## Methodology note — tooling & verification
+
+All reconnaissance, analysis, containment, and remediation in this project was performed **hands-on using industry-standard tools** (Nmap, Wireshark, netcat, the Linux CLI, iptables). Generative AI (Claude) was used as a support tool — to help plan scans, parse output, research CVEs, and draft documentation — with **every AI-suggested finding independently verified with a manual tool before being accepted as evidence.** The screenshots throughout this repository *are* those manual verifications.
 
 ---
 
