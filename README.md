@@ -22,6 +22,12 @@ A hands-on **Security Operations Center (SOC) incident-response simulation**: in
 
 ---
 
+## AI-assisted methodology
+
+This engagement used generative AI (Claude) as a **"virtual analyst"** — to help plan reconnaissance, parse tool output, research CVEs, and draft documentation. Critically, **every AI-suggested finding was independently verified with a manual tool** before being treated as evidence (the "trust but verify" mandate), and that verification is captured in the screenshots throughout this repository. Using AI as a force-multiplier while keeping a human in the loop for verification was an explicit requirement of the project.
+
+---
+
 ## The engagement
 
 ### 1 · Prepare — build an isolated forensic lab
