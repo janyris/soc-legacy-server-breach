@@ -105,6 +105,17 @@ The core problem is an unpatchable, end-of-life server exposing unnecessary serv
 
 ---
 
+## What I learned
+
+- **"Trust but verify" is not a slogan.** The FTP banner was deliberately masked, so the scanner could only guess the version. Taking that guess at face value would have mislabeled the entry point — pulling the true version from the service's own `STAT` response is what turned an assumption into evidence.
+- **Network design is itself a security control.** Choosing a Host-Only network with DHCP isolated the vulnerable host from both the internet *and* the host machine while still allowing analysis — a deliberate tradeoff over the easier but less-safe NAT option.
+- **Preserve before you touch.** Capturing volatile state (connections, processes, sessions) *before* isolating the host kept the forensic picture intact — including an active root session that corroborated the breach.
+- **Eradicate at the root, with defense in depth.** The vulnerable FTP service and the planted backdoor shared one parent process (`xinetd`). Disabling it, firewalling the port, and deleting the backdoor's config line closed the threat through multiple independent layers.
+- **Unpatchable ≠ unfixable.** When a legacy system can't be patched, compensating controls (service disablement, firewalling, isolation) plus a funded migration plan are the realistic path.
+- **Communicate to the audience.** The same incident required two very different deliverables: a technical report for engineers and a business-impact briefing for executives.
+
+---
+
 ## Repository contents
 ```
 ├── README.md                     This write-up
