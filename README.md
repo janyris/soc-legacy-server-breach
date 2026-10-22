@@ -94,6 +94,52 @@ Produced a full **[technical incident report](report/Technical_Report.pdf)** (me
 
 ---
 
+## Defender's view: how a SOC would catch this live
+
+The engagement above was worked from the responder's side, after the alert. This section turns its findings around: for each stage of the compromise, what a SOC would see, where the signal lives, and how to detect it.
+
+> **Status:** these detections are designed from this lab's evidence and the public CVE details. They have not yet been validated against replayed traffic; that is the planned follow-up (Zeek + Splunk on the same isolated network).
+
+| Stage | What the defender sees | Data source | MITRE ATT&CK |
+|---|---|---|---|
+| Reconnaissance | One host touching a very large number of ports on a target in minutes (the full-port scan hit all 65,535) | Firewall / Zeek `conn.log` | T1046 Network Service Discovery |
+| Initial access (CVE-2011-2523) | An FTP `USER` command whose username ends in `:)`, followed by a new inbound connection to TCP **6200** on the same server | Zeek `ftp.log` + `conn.log`, IDS | T1190 Exploit Public-Facing Application |
+| Planted backdoor | Any connection to TCP **1524** (`ingreslock`), which on this host was a root shell | Zeek `conn.log`, firewall | T1059.004 Unix Shell |
+| Persistence | The backdoor's line in `/etc/inetd.conf`, and `bash` spawned as a child of `inetd`/`xinetd` | File integrity monitoring, auditd / process logs | — |
+| Credential exposure | FTP and telnet logins carrying credentials in cleartext (seen in the Wireshark capture) | Zeek `ftp.log`, packet capture | — |
+
+### Draft Splunk searches
+
+Assumes Zeek logs in Splunk; field names vary by add-on and may need adjusting.
+
+```spl
+# Recon: one source hitting 100+ distinct ports on a host within 5 minutes
+index=network sourcetype=zeek:conn
+| bin _time span=5m
+| stats dc(dest_port) AS distinct_ports BY _time src_ip dest_ip
+| where distinct_ports > 100
+```
+
+```spl
+# CVE-2011-2523 trigger: FTP username ending in ":)"
+index=network sourcetype=zeek:ftp command=USER arg="*:)"
+| table _time src_ip dest_ip arg
+```
+
+```spl
+# Backdoor listeners: any connection to the vsftpd backdoor (6200) or ingreslock (1524) ports
+index=network sourcetype=zeek:conn (dest_port=6200 OR dest_port=1524)
+| stats count min(_time) AS first_seen max(_time) AS last_seen BY src_ip dest_ip dest_port
+| convert ctime(first_seen) ctime(last_seen)
+```
+
+### Triage notes
+- **Highest fidelity:** the `:)` username and any traffic to 1524/6200. Neither has a legitimate use on this network, so both can page an analyst directly.
+- **Noisier:** the port-scan search will also fire on authorized vulnerability scanners. Allow-list the scanner hosts instead of raising the threshold.
+- **Correlate:** a scan, then the FTP trigger, then a 6200 or 1524 connection from the same source within minutes is a confirmed compromise, not a suspicion.
+
+---
+
 ## Recommendations (summary)
 The core problem is an unpatchable, end-of-life server exposing unnecessary services. In priority order:
 1. **Reduce the attack surface** — disable every service not required by the business application.
@@ -132,4 +178,4 @@ All reconnaissance, analysis, containment, and remediation in this project was p
 
 ---
 
-*A cybersecurity capstone project. Performed entirely in an isolated lab against a vulnerable VM I own. No real organizations, systems, or data were involved.*
+*Performed entirely in an isolated lab against a vulnerable VM I own. No real organizations, systems, or data were involved.*
